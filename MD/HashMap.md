@@ -83,13 +83,18 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 
 java7中使用了Entry来代表HashMap中的数据节点，java8中使用Node，基本没有区别，都是key，value，hash和next这四个属性，不过Node只能用于链表的情况，红黑苏的情况需要使用TreeNode。java7是先扩容后插入数值的，java8先插入值再扩容，不过这不重要。
 
-（1）首先会将传入的 Key 做 `hash` 运算计算出 hashcode，纯粹的数学计算。
+jdk8中扩容的时候不需要像JDK1.7的实现那样重新计算hash，只需要看看原来的hash值新增的那个bit是1还是0就好了，是0的话索引没变，是1的话索引变成“原索引+oldCap”。比如16扩展32，oldCap=16。
+
+这个设计确实非常的巧妙，既省去了重新计算hash值的时间，而且同时，由于新增的1bit是0还是1可以认为是随机的，因此resize的过程，均匀的把之前的冲突的节点分散到新的bucket了。这一块就是JDK1.8新增的优化点。有一点注意区别，JDK1.7中rehash的时候，旧链表迁移新链表的时候，如果在新表的数组索引位置相同，则链表元素会倒置，JDK1.8不会倒置。
+
+（1）首先会将传入的 Key 做 `hash` 运算计算出 hashcode，纯粹的数学计算（jdk1.8）。
 ```
-static int hash(int h) {
-        h ^= (h >>> 20) ^ (h >>> 12);
-        return h ^ (h >>> 7) ^ (h >>> 4);
+static final int hash(Object key) {
+    int h;
+    return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);  
 }
 ```
+解读：key的hash值右移16位，在于其做异或运算（相同则为0，不同则为1），得到参与计算哈希桶位置的最终hash值。
 （2）然后根据数组长度取模计算出在数组中的 index 下标。
 ```
 static int indexFor(int h, int length) {
@@ -140,7 +145,7 @@ final Node<K,V> getNode(int hash, Object key) {
 }
 ```
 
-## 遍历方式
+## 遍历方式（jdk1.7）
 
 
 ```java
