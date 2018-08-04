@@ -36,10 +36,10 @@ CAS是一些CPU直接支持的指令，也就是我们前面分析的无锁操�
 ```
 //第一个参数o为给定对象，offset为对象内存的偏移量，通过这个偏移量迅速定位字段并设置或获取该字段的值，
 //expected表示期望值，x表示要设置的值，下面3个方法都通过CAS原子指令执行操作。
-public final native boolean compareAndSwapObject(Object o, long offset,Object expected, Object x);                                                                                                  
- 
+public final native boolean compareAndSwapObject(Object o, long offset,Object expected, Object x);
+
 public final native boolean compareAndSwapInt(Object o, long offset,int expected,int x);
- 
+
 public final native boolean compareAndSwapLong(Object o, long offset,long expected,long x);
 ```
 
@@ -53,7 +53,6 @@ public native void park(boolean isAbsolute, long time);
  
 //终止挂起的线程，恢复正常.java.util.concurrent包中挂起操作都是在LockSupport类实现的，其底层正是使用这两个方法，  
 public native void unpark(Object thread); 
-
 ```
 
 # 在java中的应用：Atomic系列
