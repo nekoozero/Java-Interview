@@ -69,13 +69,29 @@ public class com.crossoverjie.synchronize.Synchronize {
 可以看到在同步块的入口和出口分别有 `monitorenter,monitorexit`
 指令。
 
+## 什么是monitor
+
+每一个线程都有一个可用monitor列表，同时还有一个全局的可用列表，先来看monitor的内部
+
+<div align="center">
+  <img src="https://upload-images.jianshu.io/upload_images/2184951-c1fc7a8eee6d5d64.png?imageMogr2/auto-orient/">
+</div>
+
+- Owner：初始时为NULL表示当前没有任何线程拥有该monitor，当线程成功拥有该锁后保存线程唯一标识，当锁被释放时又设置为NULL；
+- EntryQ：关联一个系统互斥锁（semaphore），阻塞所有试图锁住monitor失败的线程。
+- RcThis：表示blocked或waiting在该monitor上的所有线程的个数。
+- Nest：用来实现重入锁的计数。
+- HashCode：保存从对象头拷贝过来的HashCode值（可能还包含GC age）。
+- Candidate：用来避免不必要的阻塞或等待线程唤醒，因为每一次只有一个线程能够成功拥有锁，如果每次前一个释放锁的线程唤醒所有正在阻塞或等待的线程，会引起不必要的上下文切换（从阻塞到就绪然后因为竞争锁失败又被阻塞）从而导致性能严重下降。Candidate只有两种可能的值：0表示没有需要唤醒的线程，1表示要唤醒一个继任线程来竞争锁。
+
+那么monitor的作用是什么呢？<strong>在 java 虚拟机中，线程一旦进入到被synchronized修饰的方法或代码块时，指定的锁对象通过某些操作将对象头中的LockWord指向monitor的起始地址与之关联，同时monitor中的Owner存放拥有该锁的线程的唯一标识，确保一次只能有一个线程执行该部分的代码，线程在获取锁之前不允许执行该部分的代码。</strong>
 
 ## 锁优化
 `synchronized`  很多都称之为重量锁，`JDK1.6` 中对 `synchronized` 进行了各种优化，为了能减少获取和释放锁带来的消耗引入了`偏向锁`和`轻量锁`。
 
 
 ### 轻量锁
-当代码进入同步块时，如果同步对象为无锁状态时，当前线程会在栈帧中创建一个锁记录(`Lock Record`)区域，同时将锁对象的对象头中 `Mark Word` 拷贝到锁记录中，再尝试使用 `CAS` 将 `Mark Word` 更新为指向锁记录的指针。
+当代码进入同步块之前，如果同步对象为无锁状态时，当前线程会在栈帧中创建一个锁记录(`Lock Record`)区域，同时将锁对象的对象头中 `Mark Word` 拷贝到锁记录中，再尝试使用 `CAS` 将 `Mark Word` 更新为指向锁记录的指针。
 
 如果更新**成功**，当前线程就获得了锁。
 
@@ -98,7 +114,7 @@ public class com.crossoverjie.synchronize.Synchronize {
 
 偏向锁的特征是:锁不存在多线程竞争，并且应由一个线程多次获得锁。
 
-当线程访问同步块时，会使用 `CAS` 将线程 ID 更新到锁对象的 `Mark Word` 中，如果更新成功则获得偏向锁，并且之后每次进入这个对象锁相关的同步块时都不需要再次获取锁了。
+当线程访问同步块并获取锁时，会使用 `CAS` 将线程 ID 更新到锁对象的 `Mark Word` 中，如果更新成功则获得偏向锁，并且之后每次进入这个对象锁相关的同步块时都不需要再次获取锁了。
 
 #### 释放锁
 当有另外一个线程获取这个锁时，持有偏向锁的线程就会释放锁，释放时会等待全局安全点(这一时刻没有字节码运行)，接着会暂停拥有偏向锁的线程，根据锁对象目前是否被锁来判定将对象头中的 `Mark Word` 设置为无锁或者是轻量锁状态。
