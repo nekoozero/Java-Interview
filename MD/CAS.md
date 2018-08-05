@@ -21,7 +21,7 @@ public boolean compareAndSwapInt(int b){
 
 假设线程1和线程2都过了a==1的监测，都准备对a赋值，结果就是两个线程同时修改了变量a，显然这种结果是无法符合预期的，无法确定a的最终值。
 
-解决的方法也同样暴力，在compareAndSwapInt方法加锁同步，变成一个院子操作，同一时刻只有一个线程才能修改变量a。
+解决的方法也同样暴力，在compareAndSwapInt方法加锁同步，变成一个原子操作，同一时刻只有一个线程才能修改变量a。
 
 除了低性能的加锁方法，我们还可以使用jdk自带的CAS方案，<strong>在CAS中，比较并替换是一组原子操作，不会被外部打断，且在性能上更占优势。</strong>
 
@@ -45,7 +45,7 @@ public final native boolean compareAndSwapLong(Object o, long offset,long expect
 
 ## 挂起与恢复
 
-将一个线程进行挂起是通过park方法实现的，调用park后，线程将一直阻塞知道超市或者中断等条件出现。unpark可以终止一个挂起的线程，使其恢复正常。Java对线程的挂起操作被封装在LockSupport类中，LockSupport类中有各种版本的pack方法，其底层最终还是使用Unsafe.park()方法和Unsafe.unpark()方法。
+将一个线程进行挂起是通过park方法实现的，调用park后，线程将一直阻塞知道超时或者中断等条件出现。unpark可以终止一个挂起的线程，使其恢复正常。Java对线程的挂起操作被封装在LockSupport类中，LockSupport类中有各种版本的pack方法，其底层最终还是使用Unsafe.park()方法和Unsafe.unpark()方法。
 
 ```
 //线程调用该方法，线程将一直阻塞直到超时，或者是中断条件出现。  
