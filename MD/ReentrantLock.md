@@ -6,7 +6,7 @@
 
 是一个**重入锁**：一个线程获得了锁之后仍然可以**反复**的加锁，不会出现自己阻塞自己的情况。
 
-> `AQS` 是 `Java` 并发包里实现锁、同步的一个重要的基础框架。
+> [AQS](https://github.com/nekoozero/Java-Interview/blob/master/MD/AQS.md#aqs%E6%A6%82%E8%BF%B0) 是 `Java` 并发包里实现锁、同步的一个重要的基础框架。
 
 
 ## 锁类型
