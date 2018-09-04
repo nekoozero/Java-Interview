@@ -505,3 +505,40 @@ ThreadPoolExecutor提供了动态调整线程池容量大小的方法：setCoreP
 如果是 IO 密集型任务，由于线程并不是一直在运行，所以可以尽可能的多配置线程，比如 `CPU 个数 * 2` 。
 
 当是一个混合型任务，可以将其拆分为 `CPU` 密集型任务以及 `IO` 密集型任务，这样来分别配置。
+
+
+附录：
+jdk1.8 ThreadPoolExecutor中execute源码：
+```java
+public void execute(Runnable command){
+    if(command ==null ){
+        throw new NullPointerException;
+        int c = ctl.get();
+        if(workerCountOf(c)<corePoolSize){     // 5
+            if(addWorker(command,true))
+                return;
+            c = ctl.get();
+        }
+    }
+    if(isRunning(c)&&workQueue.offer(cmmand)){    //10
+        int recheck = ctl.get();
+        if(!isRunning(recheck)&&remove(command))
+            reject(command);
+        else if(workerCountOf(recheck)==0)
+            addWorker(null,false);
+    }
+    else if(!addWorker(command,false))           //17
+        reject(command);                         //18
+}
+```
+
+第五行的workerCountOf()函数取得了当前线程池的线程总数。当线程总数小于corePoolSize核心线程数时，会将任务通过addWorker()方法直接调度进行。否则，在第十行代码处workerQueue.offer()进入等待队列。如果进入等待队列失败（比如有界队列到达了上限，或者使用了SynchronousQueue），则会执行第十七行，将任务直接提交给线程池。如果当前线程数已经达到了maximumPoolSize，则提交失败，就执行地18行的拒绝策略。
+
+
+
+```
+任务提交=>小于coresize=>分配线程执行
+          大于coresize=>提交到等待队列=>成功=>等待执行
+                                      =>失败=>提交线程池=>提交失败（达到max）=>拒绝执行
+                                                        提交成功（未达到）=>分配线程执行
+```
