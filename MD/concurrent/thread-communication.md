@@ -283,6 +283,136 @@ thread A执行完毕
 
 flag 采用 volatile 修饰主要是为了内存可见性，更多内容可以查看[这里](http://crossoverjie.top/2018/03/09/volatile/)。
 
+## Semaphore(信号量)
+
+信号量为多线程协作提供了更加强大的控制方法。广义上来说，信号量是对锁的扩展。他可以指定多个线程，同时访问某一个资源。
+
+其内部维护了一组虚拟的许可，许可的数量可以通过构造函数的参数指定。
+
+```java
+public Semaphore(int permits);         //默认使用非公平策略
+public Semaphore(int permits,boolean fair);  //第二个参数可以指定是否公平
+```
+
+- 访问特定资源之前，必须使用acquire方法获得许可，如果许可数量为0，该线程一直阻塞，直到有可用许可。
+- 访问资源后，使用release释放许可。
+
+### 应用场景
+Semaphore可以用来做流量分流，特别是对公共资源有限的场景，比如数据库连接。假设有这个需求，读取几万个文件的数据到数据库中，由于文件读取是IO密集型任务，可以启动几十个线程并发读取，但是数据库连接数只有10个，这是就必须控制最多只有10个线程能够拿到数据库连接进行操作。这个时候就可以使用Semaphore做流量控制。
+
+```java
+public class SemaphoreTest{
+    private static final int COUNT = 40;
+    private static Executor executor = Executors.newFixedThreadPool(COUNT);
+    private static Semaphore semaphore = new Semaphore(10);
+    public static void main(String args[]){
+        for(int i = 0;i<COUNT;i++){
+            executor.execute(new SemaphoreTest.Task());
+        }
+        executor.shutdown();
+    }
+
+    static class Task implements Runnable{
+        @Override
+        public void run(){
+            try{
+                //文件读取操作
+                semaphore.acquire();
+                System.out.prinln("Save data");
+                semaphore.release();
+            }catch(InterruptException e){
+                e.printStackTrace();
+            }finally{
+
+            }
+        }
+    }
+}
+```
+
+### 非公平策略
+1. acquire实现，核心代码如下：
+```java
+final int nofairTryAcquireShared(int acquires){
+    for(;;){
+        int available = getState();
+        int remaining = acailable-acquires;
+        if(remaining<0||comapreAndSetState(available,remaining))
+            return remaining;
+    }
+}
+```
+acquires默认值为1，表示尝试获取1个许可，remaining代表剩余的许可数。
+ - 如果remaining<0,表示目前没有剩余的许可。
+ - 当前线程进入AQS中的doAcquireInterrutibly方法等待可用许可并挂起，知道被唤醒。
+
+2. releas实现，核心代码如下：
+```java
+protected final boolean tryReleaseShared(int releases){
+    for(;;){
+        int current = getState();
+        int next = current+releases;
+        if(next<current)   //overflow
+            throw new Error("Maximum permit count exceeded");
+        if(compareAndSetState(current,next))
+            return true;
+    }
+}
+```
+
+releases值默认为1，表示尝试释放1个许可，next表示如果许可释放成功，可用许可的数量。
+ - 通过unsafe.compareAndSwapInt修改state的值，确报同一时刻只有一个线程可以释放成功。
+ - 许可释放成功，当前线程进入到AQS的doReleaseShared方法，唤醒队列中等待许可的线程。
+
+>非公平性：当一个线程执行acquire方法时，会直接尝试获取许可，而不管同一时刻阻塞队里中是否有线程也在等待许可，如果恰好有线程C执行release释放许可，并唤醒阻塞队列中第一个等待的线程B，这个时候，线程A和线程B是共同竞争可用许可，不公平性就是这么体现出爱的，线程A一点时间都没等待和线程B同等对待。 
+
+### 公平策略
+1.acquire实现，核心代码如下：
+```
+protected int tryAcquireShared(int acquires){
+    for(;;){
+        if(hasQueuedPredecessors()
+            return -1;
+        int available  = getState();
+        int remaining = available -acquires;
+        
+    }
+}
+```
+
+acquires值默认为1，表示尝试获取1个许可，remaining代表剩余的许可数。
+可以看到和非公平策略相比，就多了一个阻塞队列的检查。
+- 如果阻塞队列没有等待的线程，则参与许可的竞争。
+- 否则直接插入到阻塞队列尾节点并挂起，等待被唤醒。
+
+2. release实现和非公平策略一样
+
+### 例子
+```java
+public class SempDemo implements Runnable{
+    final Semphore semp = new Semphore(5);
+    @Override
+    public void run(){
+        try{
+            semp.acquire();
+            //模拟耗时操作
+            Thread.sleep(2000);
+            System.out.println(Thread.currentThread().getId()+":done!");
+            semp.release();
+        }catch(InterruptedException e){
+            e.printStackTrace();
+        }
+    }
+    public static void main(String args[]){
+        ExecutorService es = Executors.newFixedThreadPool(20);
+        final SemapDemo = new SemapDemo();
+        for(int i=0;i<20;i++){
+            es.execute();
+        }
+        es.shutdown();
+    }
+}
+```
 
 ## CountDownLatch 并发工具
 
