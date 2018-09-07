@@ -426,9 +426,15 @@ public class SempDemo implements Runnable{
 }
 ```
 
+本例中，同时开启20个线程，系统以5个线程为单位，依次输出带有线程ID的提示文本。
+
 ## CountDownLatch 并发工具
 
-CountDownLatch 可以实现 join 相同的功能，但是更加的灵活。
+CountDownLatch 可以实现 join 相同的功能，但是更加的灵活。允许一个或多个线程等待其他线程完成操作后再执行。
+
+CountDownLatch内部会维护一个初始值为线程数量的计数器，主线程执行await方法，如果计数器大于0，则阻塞等待。当一个线程完成任务后，计数器值减一。当计数器为0时，表示所有的线程已经完成任务，等待的主线程被唤醒继续执行。
+
+![](https://upload-images.jianshu.io/upload_images/2184951-8a570622b8297310.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/353/format/webp)
 
 ```java
     private static void countDownLatch() throws Exception{
@@ -475,6 +481,101 @@ CountDownLatch 也是基于 AQS(AbstractQueuedSynchronizer) 实现的，更多�
 - 初始化一个 CountDownLatch 时告诉并发的线程，然后在每个线程处理完毕之后调用 countDown() 方法。
 - 该方法会将 AQS 内置的一个 state 状态 -1 。
 - 最终在主线程调用 await() 方法，它会阻塞直到 `state == 0` 的时候返回。
+
+### 实现原理
+
+其内部维护了一个AQS子类，并重写了相关方法。
+
+```java
+private static final class Sync extends AbstractQueuedSynchronizer{
+    private static final long serialVersionUID = 4982264981922014374L;
+
+        Sync(int count) {
+            setState(count);
+        }
+
+        int getCount() {
+            return getState();
+        }
+
+        protected int tryAcquireShared(int acquires) {
+            return (getState() == 0) ? 1 : -1;
+        }
+
+        protected boolean tryReleaseShared(int releases) {
+            // Decrement count; signal when transition to zero
+            for (;;) {
+                int c = getState();
+                if (c == 0)
+                    return false;
+                int nextc = c-1;
+                if (compareAndSetState(c, nextc))
+                    return nextc == 0;
+            }
+        }
+}
+```
+
+### await实现
+主线程执行await方法，tryAcquireShared方法中如果state不等于0，返回-1，则加入到等待队列中，主线程通过LockSupport.park(this)被挂起。
+
+```java
+private void doAcquireSharedInterruptibly(int arg)
+    throws InterruptedException {
+    final Node node = addWaiter(Node.SHARED);
+    boolean failed = true;
+    try {
+        for (;;) {
+            final Node p = node.predecessor();
+            if (p == head) {
+                int r = tryAcquireShared(arg);
+                if (r >= 0) {
+                    setHeadAndPropagate(node, r);
+                    p.next = null; // help GC
+                    failed = false;
+                    return;
+                }
+            }
+            if (shouldParkAfterFailedAcquire(p, node) &&
+                parkAndCheckInterrupt())
+                throw new InterruptedException();
+        }
+    } finally {
+        if (failed)
+            cancelAcquire(node);
+    }
+}
+```
+
+### countDown实现
+countDown方法委托sync实现state的减1操作，即通过unsafe.compareAndSwapInt方法设置state值。
+
+```java
+public void countDown(){sync.releaseShared(1);}
+```
+
+如果state为0，通过LockSupport.unpark唤醒await方法中挂起的主线程。
+
+```java
+private void doReleaseShared(){
+    for (;;) {
+        Node h = head;
+        if (h != null && h != tail) {
+            int ws = h.waitStatus;
+            if (ws == Node.SIGNAL) {
+                if (!compareAndSetWaitStatus(h, Node.SIGNAL, 0))
+                    continue;            // loop to recheck cases
+                unparkSuccessor(h);
+            }
+            else if (ws == 0 &&
+                     !compareAndSetWaitStatus(h, 0, Node.PROPAGATE))
+                continue;                // loop on failed CAS
+        }
+        if (h == head)                   // loop if head changed
+            break;
+    }
+}
+```
 
 ## CyclicBarrier 并发工具
 
