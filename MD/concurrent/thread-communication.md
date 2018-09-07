@@ -577,7 +577,27 @@ private void doReleaseShared(){
 }
 ```
 
+### 和CyclicBarrier的区别
+1. CyclicBarrier允许一系列线程相互等待对方到达一个点，正如barrier表示的意思，该点就像是一个栅栏，先到达的线程被阻塞在栅栏前，必须等到所有线程都到达了才能够通过栅栏；
+2. CyclicBarrier持有一个变量parties，表示需要全部到达的线程数量；先到达的线程调用barrier.await方法进行等待，一旦到达的线程数达到parties变量所指定的数，栅栏打开，所有线程都可以通过。
+3. CyclicBarrier构造方法接受另一个Runnable类型参数barrierAction，该参数表明在栅栏被打开的时候需要采取的动作，null表示不采取任何动作，*注意该动作会在栅栏被打开而所有线程接着运行前被执行*。
+4. CyclicBarrier是可重用的，当最后一个线程到达的时候，栅栏被打开，所有线程通过之后栅栏重新关闭，进入下一代；
+5. CyclicBarrier.reset方法能够手动重置栅栏，此时正在等待的线程会收到BrokenBarrierException异常。
+
+
 ## CyclicBarrier 并发工具
+
+可以让一组线程达到一个屏障时被阻塞，知道最后一个线程达到屏障时，所有被阻塞的线程才能继续执行。
+
+CyclicBarrier好比一扇门，默认情况下是关闭状态，堵住了线程执行的道路，知道所有线程都就位，门才打开，让所有的线程一起通过。这个计数器可以反复使用。
+
+### 构造方法
+
+1. 默认的构造方法是CyclicBarrier(int parties),其参数拜师屏障拦截的线程数量，每个线程调用await方法告诉CyclicBarrier已经到达屏障位置，线程被阻塞。
+2. 另外一个构造方法CyclicBarrier(int parties,Runnable barrierAction),其中barrierAction任务会在所有线程到达屏障后执行。也就是一次计数完成之后，系统会执行的动作。
+
+![](https://upload-images.jianshu.io/upload_images/2184951-b972911b7debef14.png?imageMogr2/auto-orient/)
+
 
 ```java
     private static void cyclicBarrier() throws Exception {
@@ -653,6 +673,108 @@ CyclicBarrier 中文名叫做屏障或者是栅栏，也可以用于线程间通
 可以看出由于其中一个线程休眠了五秒，所有其余所有的线程都得等待这个线程调用 `await()` 。
 
 该工具可以实现 CountDownLatch 同样的功能，但是要更加灵活。甚至可以调用 `reset()` 方法重置 CyclicBarrier (需要自行捕获 BrokenBarrierException 处理) 然后重新执行。
+
+下一个例子：
+
+```java
+public class CyclicBarrierDemo {
+    public static class Soldier implements Runnable{
+        private String solider;
+        private final CyclicBarrier cyclicBarrier;
+
+        public Soldier(CyclicBarrier cyclicBarrier,String soliderName) {
+            this.cyclicBarrier = cyclicBarrier;
+            this.solider = soliderName;
+        }
+
+        @Override
+        public void run() {
+            try{
+                //等待所有士兵到齐
+                cyclicBarrier.await();  //这里设置一个屏障 ，当所有线程到达之后执行barrierAction也就是BarrierRun
+                doWorker();
+                //等待所有士兵完成工作
+                cyclicBarrier.await();   //这里又设置了一个屏障，当所有线程到达之后再次执行BarrierRun
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (BrokenBarrierException e) {
+                e.printStackTrace();
+            }
+        }
+
+        void doWorker(){
+            try {
+                Thread.sleep(Math.abs(new Random().nextInt()%10000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(solider+" 任务完成");
+        }
+    }
+
+    public static class BarrierRun implements  Runnable{
+        boolean flag;
+        int N;
+        public BarrierRun(boolean flag,int N){
+            this.flag =flag;
+            this.N  =N;
+        }
+        @Override
+        public void run() {
+            if(flag){
+                System.out.println("士兵"+N+"个，任务完成");
+            }else{
+                System.out.println("士兵"+N+"个,集合完成");
+                flag =true;
+            }
+        }
+    }
+
+
+    public static void main(String args[]){
+        final  int N =10;
+        Thread[] allSolider = new Thread[N];
+        boolean flag = false;
+        CyclicBarrier cyclicBarrier =new CyclicBarrier(N,new BarrierRun(flag,N));
+        //设置屏障点，主要是为了执行这个方法
+        System.out.println("集合队伍！");
+        for(int i = 0;i<N;++i){
+            System.out.println("士兵"+i+"报告！");
+            allSolider[i] = new Thread(new Soldier(cyclicBarrier,"士兵"+i));
+            allSolider[i].start();
+        }
+    }
+}
+
+```
+
+
+```
+集合队伍！
+士兵0报告！
+…………
+士兵9报告！
+士兵10个,集合完成
+士兵3 任务完成
+……
+士兵6 任务完成
+士兵10个，任务完成
+```
+
+这里CyclicBarrier经历了两次计数。调用了两次cyclicBarrier.await() 设立两个屏障。
+
+CyclicBarrier实现主要基于ReentrantLock。
+
+1. 每当线程执行await，内部变量count减一，如果count!=0,说明还有线程还未到屏障处，则在锁条件变量trip上等待。
+2. 当count=0时，说明所有线程都已经到屏障处，执行条件变量的signalAll方法唤醒等待的线程。其中nextGeneration方法可以实现屏障的循环使用。
+   - 重新生成Generation对象（Generation用来控制屏障的循环使用）
+   - 恢复count值
+
+### CountDownLatch区别
+
+1. CountDownLatch允许一个或多个线程等待一些特定的操作完成，而这些操作是在其他的线程中进行的，也就是说会出现***等待的线程***和***被等的线程***这样分明的角色；
+2. CountDownLatch构造函数中与一个count参数，表示有多少个线程需要被等待，对这个变量的修改实在其他线程中调用countDown方法，每一个不同的线程调用一次countDown方法就表示有一个被等待的线程到达，count变为0时，latch就会被打开，处于等待状态的那些线程接着可以执行；
+3. CountDownLatch是一次性使用的，也就是说latch只能只用一，一旦被打开就不能再次关闭，将会一直保持打开状态，因此CountDownLatch类也没有为count变量提供set方法。
 
 ## 线程响应中断
 
