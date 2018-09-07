@@ -24,7 +24,7 @@ Java 知识点，继续完善中。
 - [ConcurrentHashMap 的实现原理](https://github.com/nekoozero/Java-Interview/blob/master/MD/ConcurrentHashMap.md)
 - [线程池原理](https://github.com/nekoozero/Java-Interview/blob/master/MD/ThreadPoolExecutor.md)
 - [深入理解线程通信](https://github.com/nekoozero/Java-Interview/blob/master/MD/concurrent/thread-communication.md)
-- [交替打印奇偶数](https://github.com/nekoozero/Java-Interview/blob/master/src/main/java/com/nekoozero/actual/TwoThread.java)
+- [交替打印奇偶数](https://github.com/nekoozero/Java-Interview/blob/master/src/main/java/com/crossoverjie/actual/TwoThread.java)
 
 ### JVM
 - [Java 运行时内存划分](https://github.com/nekoozero/Java-Interview/blob/master/MD/MemoryAllocation.md)
