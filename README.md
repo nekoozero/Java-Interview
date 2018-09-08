@@ -56,9 +56,9 @@ Java 知识点，继续完善中。
 
 ### DB 相关
 
-- [MySQL 索引原理](https://github.com/nekoozero/Java-Interview/blob/master/MD/MySQL-Index.md)
-- [SQL 优化](https://github.com/nekoozero/Java-Interview/blob/master/MD/SQL-optimization.md)
-- [数据库水平垂直拆分](https://github.com/nekoozero/Java-Interview/blob/master/MD/DB-split.md)
+- [MySQL 索引原理](https://github.com/nekoozero/Java-Interview/blob/master/MD/mysql/MySQL-Index.md)
+- [SQL 优化](https://github.com/nekoozero/Java-Interview/blob/master/MD/mysql/SQL-optimization.md)
+- [数据库水平垂直拆分](https://github.com/nekoozero/Java-Interview/blob/master/MD/mysql/DB-split.md)
 
 ### 数据结构与算法
 - [红包算法](https://github.com/nekoozero/Java-Interview/blob/master/src/main/java/com/nekoozero/red/RedPacket.java)
