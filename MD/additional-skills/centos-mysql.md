@@ -10,6 +10,13 @@
 
 解压此文件 #tar xvf mysql-5.7.23-1.el6.i686.rpm-bundle.tar 
 
+在安装之前请先安装几个依赖:
+
+   yum install libaio
+
+   yum  install    numactl
+   
+
 安装：
 
  #rpm -ivh mysql-community-common-5.7.23-1.el6.i686.rpm
