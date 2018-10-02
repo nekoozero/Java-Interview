@@ -86,6 +86,8 @@ mysql>grant all privileges on *.* to 'root'@'%' identified by '123456' with gran
  #iptables -L -n
 看到state NEW tcp dpt:3306 就说明设置好了。
 
-如果想要限制访问# iptables -D INPUT -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT
+如果想要限制访问# iptables -D INPUT -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT  。
+
+在windows server中还要注意设置一下防火墙：http://www.023dns.com/server_ecs/1774.html
 
 我的总的步骤到这边就差不多了 。中间还遇到过mysql用户组的问题，当时也就放着不做了，以后有机会会尝试做做看。就酱。
