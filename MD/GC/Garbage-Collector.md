@@ -3,6 +3,9 @@
 - [垃圾收集器](#%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8)
 	- [Serial 收集器](#serial-%E6%94%B6%E9%9B%86%E5%99%A8)
 	- [ParNew 收集器](#parnew-%E6%94%B6%E9%9B%86%E5%99%A8)
+	- [Parallel Scavenge 收集器](#parallel-scavenge-%E6%94%B6%E9%9B%86%E5%99%A8)
+	- [Serial Old 收集器](#serial-old-%E6%94%B6%E9%9B%86%E5%99%A8)
+	- [Parallel Old 收集器](#parallel-old-%E6%94%B6%E9%9B%86%E5%99%A8)
 
 <!-- /MarkdownTOC -->
 
@@ -44,4 +47,42 @@ ParNew 收集器在单 CPU 的环境中绝不会有比 Serial 收集器更好的
 
 > 在谈论垃圾收集器的上下文语境中：<br>
 >    并行（Parallel）：指多条垃圾收集线程并行工作，但此时用户线程仍然处于等待状态。
->    并发（Concurrent）：指多用户线程与垃圾线程同时执行（但不一定是并行的，可能会交替执行），用户程序在继续执行，而垃圾收集程序运行与另一个 CPU 上。
+>    并发（Concurrent）：# 指多用户线程与垃圾线程同时执行（但不一定是并行的，可能会交替执行），用户程序在继续执行，而垃圾收集程序运行与另一个 CPU 上。
+
+<a id="parallel-scavenge-%E6%94%B6%E9%9B%86%E5%99%A8"></a>
+## Parallel Scavenge 收集器
+
+Parallel Scavenge 收集器是一个新生代收集器，它也是使用<strong>*复制算法*</strong>的收集器,又是并行的多线程收集器。
+
+特点：它的关注点与其他收集器不同，CMS 等收集器的关注点是`尽可能地缩短垃圾收集时用户线程的停顿时间`,而 Parallel Scavenge 收集器的目标则是`达到一个可控制的吞吐量`。
+
+> 所谓吞吐量就是 CPU 用于运行用户代码的时间与 CPU 总消耗时间的比值，即吞吐量 = 运行用户代码时间/（运行用户代码时间 + 垃圾收集时间），虚拟机总共消耗了 100 分钟，其中垃圾收集花了 1 分钟，那吞吐量就是 99%。
+
+停顿时间越短越适合需要与用户交互的程序，良好的响应速度能提升用户体验，而高吞吐量则可以高效率地利用 CPU 时间，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务。
+
+该收集器提供了两个参数用于精准控制吞吐量，分别是控制最大垃圾收集停顿时间的 <strong>- XX:MaxGCPauseMillis</strong> 参数以及直接设置吞吐量大小的 <strong>-XX:GCTimeRatio</strong> 参数。
+
+MaxGCPauseMillis 参数允许的值是一个大于 0 的毫秒数，收集器将尽可能地保证内存回收花费的时间不超过设定值。但这个只不是越小越好，*GC 停顿时间的缩短是以牺牲吞吐量和新生代空间来换取的：系统会把新生代调小一点。*这也直接导致垃圾收集发生更频繁一些，比如，原来 10 秒手机一次、每次停顿 100 毫秒，现在变成 5 秒收集一次、每次停顿 70 毫秒。停顿时间的确在下降，但吞吐量也降下来了。
+
+GCTimeRatio参数的值应当是一个大于 0 且小于 100 的整数，也就是垃圾收集时间占总时间的比率，相当于是吞吐量的倒数。如果把此参数设置为 19，那允许的最大 GC 时间就占总时间的 5%（即1/(1+19)）,默认值是 99，就是允许最大 1%（即1/(1+99)）的垃圾收集时间。
+
+Parallel Scavenge 收集器还有一个参数 -XX:+UseAdaptiveSizePolicy。这是一个开关参数，当这个参数打开之后，就不需要手工设置新生代的大小（-Xmn）、Eden 与 Survivor 区的比例（-XX:SurvivorRatio）、晋升老年代对象大小（-XX:PretenureSizeThreshold）等细节参数，虚拟机会根据当前系统的运行情况收集性能监控信息，动态调整这些参数已提供最合适的停顿时间或者最大的吞吐量，这种调节方式称为：GC 自适应的调节策略（GC Ergonomics）。只需要把基本的内存数据设置好（如 -Xmn 设置最大堆），然后使用 MaxGCPauseMillis 参数（更关注最大停顿时间）或 GCTimeRadio（更关注吞吐量）参数给虚拟机设立一个优化目标，那具体细节参数的调节工作就由虚拟机完成了。自适应调节策略也是 Parallel Scavenge 收集器与 ParNew 收集器的一个重要区别。
+
+<a id="serial-old-%E6%94%B6%E9%9B%86%E5%99%A8"></a>
+## Serial Old 收集器
+
+Serial Old 收集器是 Seria 收集器的老年代版本，他同样是一个单线程收集器，使用<strong>“标记 - 整理”</strong>算法。这个收集器的主要意义也是给 Client 模式下的虚拟机使用。如果是在 Server 模式下，name它主要还有两大用途：一种用途是在 JDK1.5 以及之前的版本中与 Parallel Scavenge 收集器搭配使用，另一种用途就是作为 CMS 收集器的后备预案，在并发收集发生 Concurrent Mode Failure 时使用。
+
+![图片来自网络](https://img-blog.csdn.net/20170102225016763)
+
+<a id="parallel-old-%E6%94%B6%E9%9B%86%E5%99%A8"></a>
+## Parallel Old 收集器
+
+Parallel Old 是 Parallel Scavenge 收集器的老年代版本，使用多线程和<strong>“标记 - 整理”</strong>算法。
+
+如果新生代选择了 Parralle Scavenge 收集器，老年代除了 Serial Old 收集器别无选择（Parallel Scavenge收集器无法与 CMS 收集器配合使用）。由于老年代 Serial Old 收集器在服务端应用性能上的“拖累”，使用了 Parallel Scavenge 收集器也未必能在整体应用上获得吞吐量最大化的效果，由于单线程的老年代收集中无法充分利用服务器多 CPU 的处理能力，在老年代很大而且硬件比较高级的环境中，这种组合的吞吐量甚至还一定有 ParNew 加 CMS 组合“给力”。
+
+直到 Parallel Old 收集器出现后，“吞吐量优先”收集器终于有了比较名副其实的应用组合，*在注重吞吐量以及 CPU 资源敏感的场合，都可以优先考虑 Parallel Scavenge 加 Parallel Old 收集器*。
+
+![图片来自网络](https://img-blog.csdn.net/20170102225017065)
+
