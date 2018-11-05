@@ -37,7 +37,7 @@ Java 知识点，继续完善中。
 - [你应该知道的 volatile 关键字](https://github.com/nekoozero/Java-Interview/blob/master/MD/concurrent/volatile.md)
 
 ### GC
-- [判断对象已死](https://github.com/nekoozero/Java-Interview/blob/master/MD/GC/Base-of-GC.md#%E6%A6%82%E8%BF%B0)
+- [判断对象已死](https://github.com/nekoozero/Java-Interview/blob/master/MD/GC/Base-of-GC.md)
 - [垃圾收集算法](https://github.com/nekoozero/Java-Interview/blob/master/MD/GC/Algorithm-GC.md)
 - [常用垃圾收集器](https://github.com/nekoozero/Java-Interview/blob/master/MD/GC/Garbage-Collector.md)
 - [CMS](https://github.com/nekoozero/Java-Interview/blob/master/MD/GC/CMS.md)
