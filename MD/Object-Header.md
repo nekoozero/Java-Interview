@@ -1,6 +1,6 @@
 # 对象的内存布局
 
-在 HotSpot 虚拟机中，对象在内存中存储的布局可以分为 3 块区域：**对头（Header）**、**实例数据（Instance Data）**、**对齐填充（Padding）**。
+在 HotSpot 虚拟机中，对象在内存中存储的布局可以分为 3 块区域：**对象头（Header）**、**实例数据（Instance Data）**、**对齐填充（Padding）**。
 
 HotSpot 虚拟机的对象头包括两部分信息。
 
