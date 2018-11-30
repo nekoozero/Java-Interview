@@ -55,6 +55,22 @@
 
 由此可见 `ArrayList` 的主要消耗是数组扩容以及在指定位置添加数据，在日常使用时最好是指定大小，尽量减少扩容。更要减少在指定位置插入数据的操作。
 
+### 初始化
+
+在源码中发现了这样的注释 **Any empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATAwill be expanded to DEFAULT_CAPACITY when the first element is added.**
+
+综合上下来看发现
+
+```java
+    //private static final int DEFAULT_CAPACITY = 10;
+    //private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
+    public ArrayList() {
+        this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
+    }
+```
+
+即new一个没有参数的ArrayList时，**ArrayList的数组是一个空数组**，但根据注释可知：`当第一个元素被添加时，空的 ArrarList 的elementData将会由 DEFAULTCAPACITY_EMPTY_ELEMENTDATA 扩容到 DEFAULT_CAPACITY（10） 大小的新数组。`
+
 ### 序列化
 
 由于 ArrayList 是基于动态数组实现的，所以并不是所有的空间都被使用。因此使用了 `transient` 修饰，可以防止被自动序列化。
