@@ -77,7 +77,8 @@
 1. 二叉树遍历操作实现的递归算法
 
 ```java
-public void preOrder(BiTreeBode root){
+//root是根节点
+public void preOrder(Node root){
     System.out.println(root.data+" ");  //访问根节点
     preOrder(root.lchild);              //先序遍历左子树
     preOrder(root.rchild);              //先序遍历右子树
@@ -101,26 +102,27 @@ public void preOrder(BiTreeBode root){
 3. 依次访问当前节点的左孩子节点，并将当前节点的有孩子节点入栈。
 4. 重复步骤2,3.
 
-先序遍历：
+非递归的中序遍历：
 
 ```java
-public void preOrder2() throws Exception{
-    BiTreeNode p =root;
-    if(p!=null){
-        LinkStack s= new LinkStack();     //构造存储节点的栈
-        s.push(p);
-        while(!s.isEmpty()){
-            p=(BiTreeNode)s.pop();
-            System.out.println(p.data+" ");   //访问当前节点
-            while(p!=null){
-                if(p.lchild!=null)            //访问左孩子结点
-                    System.out.println(p.lchild.data+" ");
-                if(p.rchild!=null)            //将右孩子结点入栈
-                    s.push(p.rchild);
-                p=p.lchild;
-            }
+//root是根节点
+public void inOrderByStack() {
+    System.out.print("中序非递归遍历:");
+    // 创建栈
+    Deque<Node> stack = new LinkedList<Node>();
+    Node current = root;
+    while (current != null || !stack.isEmpty()) {
+        while (current != null) {
+            stack.push(current);
+            current = current.leftChild;
+        }
+        if (!stack.isEmpty()) {
+            current = stack.pop();
+            System.out.print(current.value + " ");
+            current = current.rightChild;
         }
     }
+    System.out.println();   
 }
 ```
 
@@ -134,21 +136,30 @@ public void preOrder2() throws Exception{
 层次遍历
 
 ```java
-public void order() throws Exception{
-    BiTreeNode p = root;
-    while(p!=null){
-        LinkQueue q = new LinkQueue();
-        q.offer(p);
-        while(!q.isEmpty()){
-            p = (BiTreeNode)q.poll();
-            System.out.println(p.data+" ");
-            if(p.lchild!=null)
-                q.offer(p.lchild);
-            if(p.rchild!=null)
-                q.offer(p.rchild);
+//root是根节点
+public void levelOrderByStack() {
+        System.out.print("层次遍历");
+        Queue<Node> qu = new LinkedList();
+        if(root==null) {
+            return ;
+        }
+        qu.add(root);
+        while(qu.size()!=0) {
+            int len = qu.size();
+            for(int i = 0;i<len;i++) {
+                Node node = qu.poll();
+                System.out.print(node.value+" ");
+                //先将左结点放入
+                if(node.leftChild!=null) {
+                    qu.add(node.leftChild);
+                }
+                //再讲由节点放入
+                if(node.rightChild!=null) {
+                    qu.add(node.rightChild);
+                }
+            }
         }
     }
-}
 ```
 
 对于有n个结点的二叉树，因为每个节点都只访问一次，所以算法时间复杂度为O(n)。
