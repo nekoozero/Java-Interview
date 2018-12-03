@@ -19,35 +19,45 @@
 具体代码：
 
 ```java
-public void qSort(int low,int high){
-    if(low<high){
-        int p=Partition(low,high);          //将排序表分为两个部分，返回支点位置
-        qSort(low,p-1);             //递归对两个部分进行快速排序
-        qSort(p+1,high);
+//分治  递归
+  public static void quickSort(int[] arr) {
+    int low = 0,high = arr.length-1;
+    quickSort(arr,low,high);
+    
+  }
+  private static void quickSort(int[] arr,int low,int high) {
+    if(low<high) {
+      //定位
+      int index = partation(arr,low,high);
+      quickSort(arr,low,index-1);
+      quickSort(arr,index+1,high);
     }
-}
+    
+  }
 
-public int Partiotion(int low,int high){
-    RecordNode p =list[low];                   //第一个元素作为支点
-    while(low<high){                           //从顺序表的两端交替扫描
-        while(low<high&&list[high].key>p.key){
-            high--;
-        }
-        if(low<high){
-            list[low] = list[high];
-            low++;
-        }
-        while(low<high&&list[low].key<p.key){
-            low++
-        }
-        if(low<high){
-            list[high]=list[low];
-            high--;
-        }
+  //这个函数每执行一次，就把标准元素放到中间（元素大小）去，标准元素左边都是小于标准元素的  右边都是大于标准元素的
+  private static int partation(int[] arr, int low, int high) {
+    int p = arr[low];  //选取一个标准元素
+    int i  = low;
+    int j = high;
+    while(i<j) {
+      while(arr[j]>=p&&i<j) {
+        j--;
+      }
+      if(i<j) {
+        arr[i++] = arr[j];
+      }
+      while(arr[i]<=p&&i<j) {
+        i++;
+      }
+      if(i<j) {
+        arr[j--] = arr[i];
+      }
     }
-    list[low]=p;
-    return low;
-}
+    //把开始节点放到中间位置
+    arr[i] = p;
+    return i;
+  }
 ```
 
 时间复杂度：
