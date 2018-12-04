@@ -33,4 +33,18 @@ linux 所有需要写路径的地方都支持两种写法
 16. cp [-r] 源文件 新文件目录： 复制文件 -r表示复制文件夹
 17. mv 源文件 新文件 ： 剪切（具备重命名的作用）
 18. rm [-r] 文件名: 删除文件，-r说明删除文件夹 -rf 强制删除文件夹
-19. clear： 清屏
+19. clear： 清屏。
+
+## 安装jdk
+
+下载linux的.tar.gz包，上传到centos上的/usr/local/temp(这个文件夹放要安装软件的临时文件，确认安装完成后可删除里面的内容)，在temp中 ```tar zxvf ```解压后复制一份到上一层目录，重命名jdk8。
+
+编辑profile文件（/etc/profile）,注释掉有**export**的那一行，在其下面输入以下内容：
+
+```
+export JAVA_HOME=/usr/local/jdk8
+export PATH=$JAVA_HOME/bin:$PATH
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+```
+
+之后输入命令**source profile**,即可。可输入java -version 和 javac 测试。
