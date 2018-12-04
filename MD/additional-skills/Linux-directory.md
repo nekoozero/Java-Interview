@@ -47,4 +47,27 @@ export PATH=$JAVA_HOME/bin:$PATH
 export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
 ```
 
-之后输入命令**source profile**,即可。可输入java -version 和 javac 测试。
+之后输入命令**source profile**,即可。可输入```#java -version``` 和 ```#javac``` 测试。
+
+## 安装tomcat
+
+下载解压步骤和jdk一样,放在/usr/local/tomcat目录下
+
+```#vim/etc/profile```并添加内容：
+
+```
+export TOMCAT_HOME=/usr/local/tomcat
+export CATALINA_HOME=/usr/local/tomcat
+```
+
+放行8080端口
+
+```#vim /etc/sysconfig/iptables```
+
+把包含22（linux默认22端口是放行的）行复制一行，修改22为8080。（8080:9000，从8080到9000全部放行）。
+
+然后重启服务-->```#service iptables restart```(start：启动 stop：停止)
+
+启动tomcat，进入tomcat的bin文件下，命令：```#./startup.sh``` 
+
+启动tomcat并打印启动信息，```#./startup.sh & tailf ../logs/catalina.out```
