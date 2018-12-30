@@ -38,3 +38,49 @@ https://bbs.csdn.net/topics/392374837
   #appendfsync no //完全依赖操作系统，性能最好,持久化没保证
 
   日志追加方式同时带来了另一个问题。持久化文件会变的越来越大。例如我们调用 incrtest 命令 100 次，文件中必须保存全部 100 条命令，其实有 99 条都是多余的。因为要恢复数据库状态其实文件中保存一条 set test 100 就够了。为了压缩这种持久化方式的日志文件。redis 提供了 bgrewriteaof bgrewriteaof bgrewriteaof bgrewriteaof 命令。收到此命令 redis 将使用与快照类似的方式将内存中的数据以命令的方式保存到临时文件中，最后替换原来的持久化日志文件。
+
+
+## redis集群的搭建
+https://www.cnblogs.com/mafly/p/redis_cluster.html
+
+yum install ruby
+yum install rubygems
+gem install redis 
+
+注意的几点，安装ruby版本要2.2.2以上的，通过rvm安装（会比较慢，可尝试国内镜像---没找到），安装之后
+https://www.cnblogs.com/carryping/p/7447823.html，就是移除之前的ruby，将新安装的ruby作为默认的使用。
+
+简单说一下自己的配置。
+
+
+将redis（4.0）下src下的redis.conf复制到usr/local/redis-cluster/6001，修改6001下的redis.conf
+
+```
+port 9001（每个节点的端口号）
+daemonize yes  (后台启动)
+bind 192.168.31.131（绑定当前机器 IP）
+dir /usr/local/redis-cluster/6001/（数据文件存放位置）
+pidfile /var/run/redis_6001.pid（pid 6001和port要对应）
+cluster-enabled yes（启动集群模式）
+cluster-config-file nodes6001.conf（6001和port要对应）
+cluster-node-timeout 15000
+appendonly yes   (启动aof)
+
+```
+之后将6001复制5份改名为6002,6003,6004,6005,6006并修改里面的配置，主要就是4个配置,以6002配置为例
+
+```
+port 6002
+dir /usr/local/redis-cluster/6002/
+cluster-config-file nodes-6002.conf
+pidfile /var/run/redis_6002.pid
+```
+
+之后逐个启动，利用ps -el | grep redis查看是否全都启动。
+
+之后启动ruby脚本来创建集群：
+/usr/local/redis4.0/src/redis-trib.rb create --replicas 1 192.168.31.131:6001 192.168.31.131:6002 192.168.31.131:6003 192.168.31.131:6004 192.168.31.131:6005 192.168.31.131:6006
+
+1代表主从的比例是一，也就是一主一从，默认6001,6002,6003为主，6004（6001的从）,6005（6002的从）,6006（6002的从）为从。
+
+启动客户端进行操作：redis-cli -c -h 192.168.119.131 -p 9001  （-c代表以集群的方式启动客户端，不然会出错）
