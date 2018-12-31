@@ -122,6 +122,8 @@ IPV6_PRIVACY=no
 ## 安装mysql5.7
 
 [原文连接](https://blog.csdn.net/bao19901210/article/details/51917641)
+[原文连接](https://blog.csdn.net/Nicolas12/article/details/81813682)
+
 
 字符集的设置查看另一篇mysql安装的文章。
 
