@@ -24,3 +24,17 @@
 磁盘块越大，数据项越小那么数的高度就越低。这也就是为什么索引字段要尽可能小的原因。
 
 > 索引使用的一些[原则](https://github.com/crossoverJie/Java-Interview/blob/master/MD/SQL-optimization.md)。
+
+# 创建索引
+
+```sql
+show index from [table];   //查看某个表的索引
+```
+
+创建普通索引
+
+```sql
+create index [index_name] ON [tables_name](column(length))
+```
+
+length代表将要建立索引的列的前length个值放入索引当中，叫做短索引
