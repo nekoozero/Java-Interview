@@ -44,6 +44,7 @@ SELECT * FROM fruits WHERE f_price =250;
 这个查询不会使用索引。只有查询条件中使用了f_id字段才会使index_id_price索引起作用。
 
 ### 使用or关键字查询语句
+
 查询语句的查询条件中只有or关键字，且or前后的两个条件中的列都是索引时，查询中才能使用索引，否则，查询将不使用索引。通过 union all 连接来解决这个问题。
 
 ### 数据区分不明显的不建议创建索引
@@ -66,6 +67,8 @@ select name from user where create_time < FROM_UNIXTIME(CURDATE());
 ```
 
 ### 最左前缀问题
+
+如果创建了（A,B,C）这样的索引，那么会同时创建组合索引：（A,B,C）,(A,B),(C)。
 
 如果给 user 表中的 username pwd 字段创建了复合索引那么使用以下SQL 都是可以命中索引:
 
@@ -120,3 +123,5 @@ select * from table
 ```
 
 任何情况下都不要是用*，除非真的是要表中的所有数据，要不然，取哪些数据就select哪些数据。
+
+创建表时列不要使用为null的默认值。尽量使用短索引。
