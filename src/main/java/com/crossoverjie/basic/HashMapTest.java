@@ -1,9 +1,7 @@
 package com.crossoverjie.basic;
 
 import java.security.Key;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Function:
@@ -38,5 +36,7 @@ public class HashMapTest {
         map.forEach((key, value) -> {
             System.out.println("key=" + key + " value=" + map.get(key));
         });
+
+        
     }
 }
