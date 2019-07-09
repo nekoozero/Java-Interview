@@ -79,9 +79,17 @@ yum install iptables-services
 
 然后重启服务-->```#service iptables restart```(start：启动 stop：停止)
 
+这里还有使用firewall的方法：
+
+启动防火墙：```# systemctl start firewalld.service```;
+
+开启端口：```# firewall-cmd --zone=public --add-port=8080/tcp --permanent```;
+
+重启防火墙：```# firewall-cmd --reload```;
+
 启动tomcat，进入tomcat的bin文件下，命令：```#./startup.sh``` 
 
-启动tomcat并打印启动信息，```#./startup.sh & tailf ../logs/catalina.out```
+启动tomcat并打印启动信息，```#./startup.sh & tailf ../logs/catalina.out```，ctrl+c会停止输出日志，但不会停掉tomcat。
 
 
 ## 配置网络（centos7 vm12 其他配置省略）
