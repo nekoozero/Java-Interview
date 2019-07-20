@@ -39,3 +39,6 @@ public class AppTest {
 ```
 
 这里将该测试文件标记为test
+
+## 但有时也没有用
+直接用maven命令行：mvn install -Dmaven.test.skip=true
