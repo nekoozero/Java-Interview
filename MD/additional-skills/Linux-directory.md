@@ -41,7 +41,7 @@ linux 所有需要写路径的地方都支持两种写法
 
 下载linux的.tar.gz包，上传到centos上的/usr/local/temp(这个文件夹放要安装软件的临时文件，确认安装完成后可删除里面的内容)，在temp中 ```tar zxvf ```解压后复制一份到上一层目录，重命名jdk8。
 
-编辑profile文件（/etc/profile）,注释掉有**export**的那一行，在其下面输入以下内容：
+编辑profile文件（/etc/profile）,注释掉有**export**的那一行，在其下面输入以下内容，=两边不要由空格：
 
 ```
 export JAVA_HOME=/usr/local/jdk8
